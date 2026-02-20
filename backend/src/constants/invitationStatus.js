@@ -1,0 +1,8 @@
+const INVITATION_STATUS = Object.freeze({
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  CANCELLED: "CANCELLED",
+  EXPIRED: "EXPIRED",
+});
+
+module.exports = { INVITATION_STATUS };
