@@ -13,8 +13,16 @@ async function bootstrap() {
     await sequelize.authenticate();
 
     // Dev-friendly. Replace with migrations later.
-    if (process.env.NODE_ENV !== "production") {
-      await sequelize.sync({ alter: true });
+    const shouldSync =
+      process.env.NODE_ENV !== "production" || process.env.DB_SYNC === "true";
+
+    if (shouldSync) {
+      // En prod mejor sin alter. En dev sí puedes mantener alter.
+      if (process.env.NODE_ENV === "production") {
+        await sequelize.sync(); // crea tablas si no existen
+      } else {
+        await sequelize.sync({ alter: true });
+      }
     }
 
     app.listen(PORT, () => {
