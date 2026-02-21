@@ -6,3 +6,5 @@ coverage
 logs
 *.log
 .DS_Store
+*.zip
+frontend/*.zip

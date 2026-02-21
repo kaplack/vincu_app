@@ -1,6 +1,11 @@
+// backend/src/config/env.js
+
 function parseOrigins(value) {
   if (!value) return ["http://localhost:5173"];
-  return value.split(",").map((s) => s.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 const allowedOrigins = parseOrigins(process.env.CORS_ORIGIN);
