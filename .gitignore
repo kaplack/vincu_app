@@ -9,3 +9,6 @@ logs
 *.zip
 frontend/*.zip
 backend/*.zip
+
+# secrets
+backend/keys/
