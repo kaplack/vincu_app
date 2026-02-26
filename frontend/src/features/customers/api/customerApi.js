@@ -2,6 +2,12 @@ import apiClient from "@/services/apiClient";
 
 const BASE = "/customers";
 
+export async function createCustomer(payload) {
+  // payload: { firstName?: string, phone: string }
+  const { data } = await apiClient.post(BASE, payload);
+  return data; // { customer, membership, directLink, meta? }
+}
+
 export async function listCustomers() {
   const { data } = await apiClient.get(BASE);
   return data; // { items: [...] }

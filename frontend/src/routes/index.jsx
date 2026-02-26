@@ -12,10 +12,12 @@ import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
 import Blog from "@/features/marketing/pages/Blog";
 
-import Join from "@/features/public/pages/Join";
-import ConsultaLogin from "@/features/public/pages/ConsultaLogin";
-import ConsultaCards from "@/features/public/pages/ConsultaCard";
+//import Join from "@/features/public/pages/Join";
+// import ConsultaLogin from "@/features/public/pages/ConsultaLogin";
+// import ConsultaCards from "@/features/public/pages/ConsultaCard";
 import CardPublic from "@/features/public/pages/CardPublic";
+
+import JoinPublic from "@/features/public/pages/JoinPublic";
 
 // CUSTOMER PORTAL
 import CustomerLayout from "@/app/layouts/CustomerLayout";
@@ -51,9 +53,9 @@ export const routes = (
       <Route path="/register" element={<Register />} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/invite" element={<Invite />} />
-      <Route path="/join/:slug" element={<Join />} />
-      <Route path="/consulta" element={<ConsultaLogin />} />
-      <Route path="/consulta/cards" element={<ConsultaCards />} />
+      <Route path="/join/:slug" element={<JoinPublic />} />
+      {/* <Route path="/consulta" element={<ConsultaLogin />} />
+      <Route path="/consulta/cards" element={<ConsultaCards />} /> */}
       <Route path="/c/:token" element={<CardPublic />} />
     </Route>
 

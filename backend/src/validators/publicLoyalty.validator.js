@@ -1,19 +1,12 @@
 // backend/src/validators/publicLoyalty.validator.js
 const { z } = require("zod");
 
-const joinBySlugBodySchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  documentNumber: z.string().min(6).max(20),
-  phone: z.string().min(6).max(20),
-});
-
-const consultaLoginBodySchema = z.object({
-  phone: z.string().min(6).max(20),
-  documentNumber: z.string().min(6).max(20),
+// JOIN lite: solo teléfono (+ alias opcional)
+const joinLiteBodySchema = z.object({
+  phone: z.string().min(1, "phone is required").max(20),
+  firstName: z.string().max(80).optional(),
 });
 
 module.exports = {
-  joinBySlugBodySchema,
-  consultaLoginBodySchema,
+  joinLiteBodySchema,
 };

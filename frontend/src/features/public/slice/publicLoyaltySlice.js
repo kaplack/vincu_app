@@ -1,10 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   joinBySlug,
-  consultaLogin,
-  consultaCards,
+  //consultaLogin,
+  //consultaCards,
   getByPublicToken,
-  setCustomerToken,
+  //setCustomerToken,
   clearCustomerToken,
   getCustomerToken,
 } from "@/features/public/api/publicLoyaltyApi";
@@ -20,34 +20,34 @@ export const joinBySlugThunk = createAsyncThunk(
   },
 );
 
-export const consultaLoginThunk = createAsyncThunk(
-  "publicLoyalty/consultaLogin",
-  async (payload, { rejectWithValue }) => {
-    try {
-      const data = await consultaLogin(payload);
+// export const consultaLoginThunk = createAsyncThunk(
+//   "publicLoyalty/consultaLogin",
+//   async (payload, { rejectWithValue }) => {
+//     try {
+//       const data = await consultaLogin(payload);
 
-      // Tu backend devuelve { token }
-      if (data?.token) {
-        setCustomerToken(data.token);
-      }
+//       // Tu backend devuelve { token }
+//       if (data?.token) {
+//         setCustomerToken(data.token);
+//       }
 
-      return data;
-    } catch (err) {
-      return rejectWithValue(err?.response?.data || err?.message || "Error");
-    }
-  },
-);
+//       return data;
+//     } catch (err) {
+//       return rejectWithValue(err?.response?.data || err?.message || "Error");
+//     }
+//   },
+// );
 
-export const consultaCardsThunk = createAsyncThunk(
-  "publicLoyalty/consultaCards",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await consultaCards();
-    } catch (err) {
-      return rejectWithValue(err?.response?.data || err?.message || "Error");
-    }
-  },
-);
+// export const consultaCardsThunk = createAsyncThunk(
+//   "publicLoyalty/consultaCards",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       return await consultaCards();
+//     } catch (err) {
+//       return rejectWithValue(err?.response?.data || err?.message || "Error");
+//     }
+//   },
+// );
 
 export const getByPublicTokenThunk = createAsyncThunk(
   "publicLoyalty/getByPublicToken",
@@ -104,39 +104,39 @@ const slice = createSlice({
         state.error = action.payload || "Error";
       })
 
-      // consulta login
-      .addCase(consultaLoginThunk.pending, (state) => {
-        state.status = "loading";
-        state.error = null;
-      })
-      .addCase(consultaLoginThunk.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.customerToken = action.payload?.token || null;
-      })
-      .addCase(consultaLoginThunk.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload || "Credenciales inválidas";
-      })
+      // // consulta login
+      // .addCase(consultaLoginThunk.pending, (state) => {
+      //   state.status = "loading";
+      //   state.error = null;
+      // })
+      // .addCase(consultaLoginThunk.fulfilled, (state, action) => {
+      //   state.status = "succeeded";
+      //   state.customerToken = action.payload?.token || null;
+      // })
+      // .addCase(consultaLoginThunk.rejected, (state, action) => {
+      //   state.status = "failed";
+      //   state.error = action.payload || "Credenciales inválidas";
+      // })
 
-      // consulta cards
-      .addCase(consultaCardsThunk.pending, (state) => {
-        state.status = "loading";
-        state.error = null;
-      })
-      .addCase(consultaCardsThunk.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        const data = action.payload;
-        const items =
-          (Array.isArray(data?.items) && data.items) ||
-          (Array.isArray(data?.cards) && data.cards) ||
-          (Array.isArray(data?.memberships) && data.memberships) ||
-          [];
-        state.cards = items;
-      })
-      .addCase(consultaCardsThunk.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload || "Error";
-      })
+      // // consulta cards
+      // .addCase(consultaCardsThunk.pending, (state) => {
+      //   state.status = "loading";
+      //   state.error = null;
+      // })
+      // .addCase(consultaCardsThunk.fulfilled, (state, action) => {
+      //   state.status = "succeeded";
+      //   const data = action.payload;
+      //   const items =
+      //     (Array.isArray(data?.items) && data.items) ||
+      //     (Array.isArray(data?.cards) && data.cards) ||
+      //     (Array.isArray(data?.memberships) && data.memberships) ||
+      //     [];
+      //   state.cards = items;
+      // })
+      // .addCase(consultaCardsThunk.rejected, (state, action) => {
+      //   state.status = "failed";
+      //   state.error = action.payload || "Error";
+      // })
 
       // public card
       .addCase(getByPublicTokenThunk.pending, (state) => {

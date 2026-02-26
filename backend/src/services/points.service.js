@@ -1,6 +1,7 @@
 // backend/src/services/points.service.js
 const { sequelize } = require("../config/db");
 const { HttpError } = require("../utils/httpError");
+const walletCardService = require("./walletCard.service");
 
 /**
  * Confirma que la membership existe y pertenece al business actual.
@@ -15,7 +16,7 @@ async function ensureMembership(businessId, membershipId, options = {}) {
 
   const membership = await CustomerMembership.findOne({
     where: { id: membershipId, businessId },
-    attributes: ["id", "pointsBalance", "businessId"],
+    attributes: ["id", "pointsBalance", "businessId", "status"],
     ...options,
   });
 
@@ -136,6 +137,20 @@ async function createTransaction(
       ? await run(externalTx)
       : await sequelize.transaction(async (t) => run(t));
 
+    // 🔥 Sync Wallet fuera de la transacción DB
+    // (no bloquea la consistencia del saldo en tu DB)
+    try {
+      await walletCardService.syncWalletPoints({
+        membershipId,
+        businessId,
+        pointsBalance: result.pointsBalance,
+      });
+    } catch (e) {
+      // No rompas el flujo de POS por un problema externo.
+      // Solo loguea para debug.
+      console.warn("Wallet sync failed:", e?.message || e);
+    }
+
     return result;
   } catch (err) {
     // Si se duplica idempotencyKey (unique index membershipId+idempotencyKey),
@@ -151,6 +166,16 @@ async function createTransaction(
         const membership = await ensureMembership(businessId, membershipId, {
           transaction: externalTx || undefined,
         });
+        try {
+          await walletCardService.syncWalletPoints({
+            membershipId,
+            businessId,
+            pointsBalance: membership.pointsBalance || 0,
+          });
+        } catch (e) {
+          console.warn("Wallet sync failed:", e?.message || e);
+        }
+
         return { item: existing, pointsBalance: membership.pointsBalance || 0 };
       }
     }

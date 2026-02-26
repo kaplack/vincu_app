@@ -36,6 +36,7 @@ export default function Recompensas() {
   const [description, setDescription] = useState("");
   const [pointsRequired, setPointsRequired] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     dispatch(fetchRewardsThunk());
@@ -59,25 +60,28 @@ export default function Recompensas() {
   };
 
   const handleSave = async () => {
-    if (!name || !pointsRequired) {
-      toast.error("Por favor completa todos los campos obligatorios");
-      return;
-    }
-
-    const points = parseInt(pointsRequired, 10);
-    if (!Number.isInteger(points) || points <= 0) {
-      toast.error("Puntos requeridos inválidos");
-      return;
-    }
-
-    const payload = {
-      name: name.trim(),
-      description: description?.trim() ? description.trim() : null,
-      pointsRequired: points,
-      isActive,
-    };
+    if (isSaving) return; // 👈 candado anti doble click
+    setIsSaving(true);
 
     try {
+      if (!name || !pointsRequired) {
+        toast.error("Por favor completa todos los campos obligatorios");
+        return;
+      }
+
+      const points = parseInt(pointsRequired, 10);
+      if (!Number.isInteger(points) || points <= 0) {
+        toast.error("Puntos requeridos inválidos");
+        return;
+      }
+
+      const payload = {
+        name: name.trim(),
+        description: description?.trim() ? description.trim() : null,
+        pointsRequired: points,
+        isActive,
+      };
+
       if (selectedReward) {
         await dispatch(
           updateRewardThunk({ rewardId: selectedReward.id, payload }),
@@ -87,9 +91,12 @@ export default function Recompensas() {
         await dispatch(createRewardThunk(payload)).unwrap();
         toast.success("Recompensa creada correctamente");
       }
+
       setDialogOpen(false);
     } catch (err) {
       toast.error(err?.message || "Ocurrió un error guardando la recompensa");
+    } finally {
+      setIsSaving(false); // 👈 libera el candado sí o sí
     }
   };
 
@@ -222,10 +229,18 @@ export default function Recompensas() {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button onClick={handleSave} className="flex-1">
+              <Button
+                onClick={handleSave}
+                className="flex-1"
+                disabled={isSaving}
+              >
                 {selectedReward ? "Actualizar" : "Crear"}
               </Button>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                disabled={isSaving}
+              >
                 Cancelar
               </Button>
             </div>

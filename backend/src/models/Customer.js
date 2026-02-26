@@ -13,11 +13,11 @@ function initCustomerModel(sequelize) {
 
       firstName: {
         type: DataTypes.STRING(80),
-        allowNull: false,
+        allowNull: true,
       },
       lastName: {
         type: DataTypes.STRING(80),
-        allowNull: false,
+        allowNull: true,
       },
 
       documentType: {
@@ -27,7 +27,7 @@ function initCustomerModel(sequelize) {
       },
       documentNumber: {
         type: DataTypes.STRING(20),
-        allowNull: false,
+        allowNull: true,
       },
 
       // Global unique identifier for customer (MVP)

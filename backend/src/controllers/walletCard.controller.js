@@ -38,4 +38,15 @@ module.exports = {
       next(err);
     }
   },
+
+  // ✅ NUEVO (público)
+  async getSaveUrlByPublicToken(req, res, next) {
+    try {
+      const { token } = req.params;
+      const result = await walletCardService.buildSaveUrlByPublicToken(token);
+      res.json(result); // { saveUrl }
+    } catch (err) {
+      next(err);
+    }
+  },
 };

@@ -6,8 +6,21 @@ const { requireAuth } = require("../middlewares/auth.middleware");
 const {
   requireBusinessMember,
 } = require("../middlewares/businessAccess.middleware");
-const { validateParams } = require("../middlewares/validate.middleware");
+const {
+  validateParams,
+  validateBody,
+} = require("../middlewares/validate.middleware");
 const customerValidators = require("../validators/customer.validators");
+
+// Crete Customer (from public join or admin panel)
+// POST /api/customers
+router.post(
+  "/",
+  requireAuth,
+  requireBusinessMember,
+  validateBody(customerValidators.createCustomerBody),
+  customerController.createCustomer,
+);
 
 // List (tabla)
 router.get("/", requireAuth, requireBusinessMember, customerController.list);

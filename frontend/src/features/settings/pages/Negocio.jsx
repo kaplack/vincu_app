@@ -158,7 +158,15 @@ export default function Configuracion() {
     setCreateBusinessOpen(true);
   };
 
+  // ----------------------------
+  // Create Business submit handler
+  // ----------------------------
+  const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
+
   const handleCreateBusiness = async () => {
+    if (isCreatingBusiness) return; // 👈 anti doble tap
+    setIsCreatingBusiness(true);
+
     const commercialName = createBusinessForm.commercialName.trim();
     const legalName = createBusinessForm.legalName.trim();
     const category = (createBusinessForm.category || DEFAULT_CATEGORY).trim();
@@ -188,6 +196,8 @@ export default function Configuracion() {
           ? err
           : err?.message || err?.error || "No se pudo crear el negocio";
       toast.error(msg);
+    } finally {
+      setIsCreatingBusiness(false);
     }
   };
 
@@ -801,10 +811,14 @@ export default function Configuracion() {
 
       <CreateBusinessModal
         open={createBusinessOpen}
-        onOpenChange={setCreateBusinessOpen}
+        onOpenChange={(open) => {
+          if (isCreatingBusiness) return; // opcional: no cerrar mientras guarda
+          setCreateBusinessOpen(open);
+        }}
         value={createBusinessForm}
         onChange={setCreateBusinessForm}
         onSubmit={handleCreateBusiness}
+        isSubmitting={isCreatingBusiness} // 👈 agrega esta prop
       />
 
       <CreateBranchModal

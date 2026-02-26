@@ -80,6 +80,9 @@ export default function Canjes() {
   const [reasonCode, setReasonCode] = useState("customer_changed_mind");
   const [reasonText, setReasonText] = useState("");
 
+  // local botom lock state
+  const [isProcessing, setIsProcessing] = useState(false);
+
   // Load initial lists
   useEffect(() => {
     dispatch(fetchRedemptionsThunk({ status: "issued", q: "" }));
@@ -95,21 +98,28 @@ export default function Canjes() {
   const filteredRedeemed = useMemo(() => redeemed, [redeemed]);
 
   const handleValidate = async () => {
+    if (isProcessing) return;
+
     const redeemCode = codeToValidate.trim();
     if (!redeemCode) {
       toast.error("Ingresa un código de canje");
       return;
     }
 
-    const res = await dispatch(consumeRedemptionThunk({ redeemCode }));
-    if (consumeRedemptionThunk.fulfilled.match(res)) {
-      toast.success(res.payload?.message || "Canje confirmado.");
-      setCodeToValidate("");
-      // refresca listas con el mismo q actual
-      dispatch(fetchRedemptionsThunk({ status: "issued", q: searchQuery }));
-      dispatch(fetchRedemptionsThunk({ status: "redeemed", q: searchQuery }));
-    } else {
-      toast.error(res.payload?.message || "No se pudo confirmar el canje.");
+    setIsProcessing(true);
+    try {
+      const res = await dispatch(consumeRedemptionThunk({ redeemCode }));
+      if (consumeRedemptionThunk.fulfilled.match(res)) {
+        toast.success(res.payload?.message || "Canje confirmado.");
+        setCodeToValidate("");
+        // refresca listas con el mismo q actual
+        dispatch(fetchRedemptionsThunk({ status: "issued", q: searchQuery }));
+        dispatch(fetchRedemptionsThunk({ status: "redeemed", q: searchQuery }));
+      } else {
+        toast.error(res.payload?.message || "No se pudo confirmar el canje.");
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -121,6 +131,7 @@ export default function Canjes() {
   };
 
   const confirmCancel = async () => {
+    if (isProcessing) return;
     if (!cancelCode) return;
 
     if (reasonCode === "other" && reasonText.trim().length < 5) {
@@ -128,21 +139,26 @@ export default function Canjes() {
       return;
     }
 
-    const res = await dispatch(
-      cancelRedemptionThunk({
-        redeemCode: cancelCode,
-        reasonCode,
-        reasonText: reasonCode === "other" ? reasonText.trim() : undefined,
-      }),
-    );
+    setIsProcessing(true);
+    try {
+      const res = await dispatch(
+        cancelRedemptionThunk({
+          redeemCode: cancelCode,
+          reasonCode,
+          reasonText: reasonCode === "other" ? reasonText.trim() : undefined,
+        }),
+      );
 
-    if (cancelRedemptionThunk.fulfilled.match(res)) {
-      toast.success(res.payload?.message || "Canje anulado.");
-      setCancelOpen(false);
-      dispatch(fetchRedemptionsThunk({ status: "issued", q: searchQuery }));
-      // (si luego implementas tab Cancelados, lo cargas aparte)
-    } else {
-      toast.error(res.payload?.message || "No se pudo anular el canje.");
+      if (cancelRedemptionThunk.fulfilled.match(res)) {
+        toast.success(res.payload?.message || "Canje anulado.");
+        setCancelOpen(false);
+        dispatch(fetchRedemptionsThunk({ status: "issued", q: searchQuery }));
+        dispatch(fetchRedemptionsThunk({ status: "redeemed", q: searchQuery })); // 👈 recomendado
+      } else {
+        toast.error(res.payload?.message || "No se pudo anular el canje.");
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -173,7 +189,7 @@ export default function Canjes() {
           <Button
             onClick={handleValidate}
             className="w-full gap-2 md:w-auto"
-            disabled={status === "loading"}
+            disabled={status === "loading" || isProcessing}
           >
             <CheckCircle className="h-4 w-4" />
             Confirmar Canje
@@ -237,12 +253,16 @@ export default function Canjes() {
                             size="sm"
                             variant="outline"
                             className="gap-1 text-green-600 hover:text-green-700"
-                            onClick={() =>
-                              dispatch(
-                                consumeRedemptionThunk({
-                                  redeemCode: r.redeemCode || r.code,
-                                }),
-                              ).then((res) => {
+                            onClick={async () => {
+                              if (isProcessing) return;
+                              setIsProcessing(true);
+                              try {
+                                const res = await dispatch(
+                                  consumeRedemptionThunk({
+                                    redeemCode: r.redeemCode || r.code,
+                                  }),
+                                );
+
                                 if (
                                   consumeRedemptionThunk.fulfilled.match(res)
                                 ) {
@@ -267,8 +287,11 @@ export default function Canjes() {
                                       "No se pudo confirmar.",
                                   );
                                 }
-                              })
-                            }
+                              } finally {
+                                setIsProcessing(false);
+                              }
+                            }}
+                            disabled={isProcessing}
                           >
                             <CheckCircle className="h-3 w-3" />
                             Validar
@@ -281,6 +304,7 @@ export default function Canjes() {
                             onClick={() =>
                               openCancelDialog(r.redeemCode || r.code)
                             }
+                            disabled={isProcessing}
                           >
                             <XCircle className="h-3 w-3" />
                             Anular
@@ -405,12 +429,20 @@ export default function Canjes() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setCancelOpen(false)}
+              disabled={isProcessing}
+            >
               Cancelar
             </Button>
-            <Button onClick={confirmCancel} className="gap-2">
+            <Button
+              onClick={confirmCancel}
+              className="gap-2"
+              disabled={isProcessing}
+            >
               <XCircle className="h-4 w-4" />
-              Anular y devolver puntos
+              {isProcessing ? "Procesando..." : "Anular y devolver puntos"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -4,7 +4,22 @@ import {
   getMembershipDetail,
   getByQrToken,
   listTransactions,
+  createCustomer,
 } from "../api/customerApi";
+
+// thunk
+export const createCustomerThunk = createAsyncThunk(
+  "customers/create",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await createCustomer(payload);
+    } catch (err) {
+      return rejectWithValue(
+        err?.response?.data || { message: "Failed to create customer." },
+      );
+    }
+  },
+);
 
 export const fetchCustomersThunk = createAsyncThunk(
   "customers/fetchList",
@@ -70,6 +85,9 @@ const initialState = {
   selectedStatus: "idle",
   selectedError: null,
 
+  createStatus: "idle",
+  createError: null,
+
   transactionsByMembershipId: {},
 };
 
@@ -85,6 +103,22 @@ const customersSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Create
+      .addCase(createCustomerThunk.pending, (state) => {
+        state.createStatus = "loading";
+        state.createError = null;
+      })
+      .addCase(createCustomerThunk.fulfilled, (state, action) => {
+        state.createStatus = "succeeded";
+
+        // Opción A (simple y segura): refetch de la lista desde el componente
+        // Opción B: insertar en state.items si tu UI usa esa forma
+        // state.items.unshift(mapFromResponse(action.payload));
+      })
+      .addCase(createCustomerThunk.rejected, (state, action) => {
+        state.createStatus = "failed";
+        state.createError = action.payload || action.error;
+      })
       // List
       .addCase(fetchCustomersThunk.pending, (state) => {
         state.status = "loading";
@@ -171,3 +205,7 @@ export const selectTransactionsByMembershipId = (membershipId) => (state) =>
     status: "idle",
     error: null,
   };
+
+export const selectCreateCustomerStatus = (state) =>
+  state.customers.createStatus;
+export const selectCreateCustomerError = (state) => state.customers.createError;

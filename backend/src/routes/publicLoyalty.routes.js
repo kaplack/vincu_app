@@ -3,23 +3,22 @@
 const router = require("express").Router();
 
 const ctrl = require("../controllers/publicLoyalty.controller");
-const { requireCustomer } = require("../middlewares/customerAuth.middleware");
 const { validateBody } = require("../middlewares/validate.middleware");
-
 const {
-  joinBySlugBodySchema,
-  consultaLoginBodySchema,
-} = require("../validators/publicLoyalty.validator");
+  rateLimitPublic,
+} = require("../middlewares/rateLimitPublic.middleware");
 
-router.post("/join/:slug", validateBody(joinBySlugBodySchema), ctrl.joinBySlug);
+const { joinLiteBodySchema } = require("../validators/publicLoyalty.validator");
 
+// JOIN público (sin auth)
 router.post(
-  "/consulta/login",
-  validateBody(consultaLoginBodySchema),
-  ctrl.consultaLogin,
+  "/join/:slug",
+  rateLimitPublic({ windowMs: 60_000, max: 10 }),
+  validateBody(joinLiteBodySchema),
+  ctrl.joinLite,
 );
 
-router.get("/consulta/cards", requireCustomer, ctrl.consultaCards);
+// Consulta pública por token (se queda para 0-tech)
 router.get("/c/:token", ctrl.getByPublicToken);
 
 module.exports = router;

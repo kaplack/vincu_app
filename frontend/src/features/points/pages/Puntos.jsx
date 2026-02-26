@@ -64,6 +64,9 @@ export default function Puntos() {
 
   const [searchQuery, setSearchQuery] = useState(""); // filtro del historial
 
+  // local lock for buttons while creating
+  const [isCreatingLocal, setIsCreatingLocal] = useState(false);
+
   // Transactions selector depende del membershipId
   const txState = useSelector(
     selectTransactionsByMembershipId(selectedMembershipId || "___none___"),
@@ -151,6 +154,7 @@ export default function Puntos() {
   }
 
   async function handleEarn() {
+    if (isCreatingLocal) return;
     if (!selectedMembershipId) return toast.error("Selecciona un cliente.");
 
     const pts = Number(points);
@@ -158,32 +162,36 @@ export default function Puntos() {
       return toast.error("Los puntos deben ser un entero mayor a 0.");
     }
 
-    const payload = {
-      membershipId: selectedMembershipId,
-      type: "earn",
-      points: pts,
-      note: note?.trim() || "Ingreso de puntos",
-      source: "manual",
-      branchId: selectedBranchId || null,
-      idempotencyKey: `earn-${selectedMembershipId}-${Date.now()}`,
-    };
+    setIsCreatingLocal(true);
+    try {
+      const payload = {
+        membershipId: selectedMembershipId,
+        type: "earn",
+        points: pts,
+        note: note?.trim() || "Ingreso de puntos",
+        source: "manual",
+        branchId: selectedBranchId || null,
+        idempotencyKey: crypto.randomUUID(),
+      };
 
-    const res = await dispatch(createPointsTxThunk(payload));
-    if (createPointsTxThunk.fulfilled.match(res)) {
-      toast.success("Puntos agregados.");
-
-      // refrescar detalle + historial
-      dispatch(fetchMembershipDetailThunk(selectedMembershipId));
-      dispatch(fetchTransactionsThunk(selectedMembershipId));
-
-      setPoints("");
-      setNote("");
-    } else {
-      toast.error(res.payload?.message || "No se pudo agregar puntos");
+      const res = await dispatch(createPointsTxThunk(payload));
+      if (createPointsTxThunk.fulfilled.match(res)) {
+        toast.success("Puntos agregados.");
+        dispatch(fetchMembershipDetailThunk(selectedMembershipId));
+        dispatch(fetchTransactionsThunk(selectedMembershipId));
+        setPoints("");
+        setNote("");
+      } else {
+        toast.error(res.payload?.message || "No se pudo agregar puntos");
+      }
+    } finally {
+      setIsCreatingLocal(false);
     }
   }
 
   async function handleAdjust(sign) {
+    if (isCreatingLocal) return;
+
     if (!selectedMembershipId) return toast.error("Selecciona un cliente.");
 
     const pts = Number(points);
@@ -193,28 +201,33 @@ export default function Puntos() {
     if (!note?.trim()) {
       return toast.error("Para ajuste manual, la descripción es obligatoria.");
     }
+    setIsCreatingLocal(true);
 
-    const payload = {
-      membershipId: selectedMembershipId,
-      type: "adjust",
-      points: sign === "minus" ? -pts : pts,
-      note: note.trim(),
-      source: "manual",
-      branchId: selectedBranchId || null,
-      idempotencyKey: `adj-${selectedMembershipId}-${Date.now()}`,
-    };
+    try {
+      const payload = {
+        membershipId: selectedMembershipId,
+        type: "adjust",
+        points: sign === "minus" ? -pts : pts,
+        note: note.trim(),
+        source: "manual",
+        branchId: selectedBranchId || null,
+        idempotencyKey: `adj-${selectedMembershipId}-${Date.now()}`,
+      };
 
-    const res = await dispatch(createPointsTxThunk(payload));
-    if (createPointsTxThunk.fulfilled.match(res)) {
-      toast.success("Ajuste registrado.");
+      const res = await dispatch(createPointsTxThunk(payload));
+      if (createPointsTxThunk.fulfilled.match(res)) {
+        toast.success("Ajuste registrado.");
 
-      dispatch(fetchMembershipDetailThunk(selectedMembershipId));
-      dispatch(fetchTransactionsThunk(selectedMembershipId));
+        dispatch(fetchMembershipDetailThunk(selectedMembershipId));
+        dispatch(fetchTransactionsThunk(selectedMembershipId));
 
-      setPoints("");
-      setNote("");
-    } else {
-      toast.error(res.payload?.message || "No se pudo registrar el ajuste");
+        setPoints("");
+        setNote("");
+      } else {
+        toast.error(res.payload?.message || "No se pudo registrar el ajuste");
+      }
+    } finally {
+      setIsCreatingLocal(false);
     }
   }
 
@@ -324,7 +337,7 @@ export default function Puntos() {
               <Button
                 className="flex-1"
                 onClick={handleEarn}
-                disabled={createStatus === "loading"}
+                disabled={createStatus === "loading" || isCreatingLocal}
               >
                 {createStatus === "loading" ? "Registrando..." : "Sumar Puntos"}
               </Button>
@@ -332,14 +345,14 @@ export default function Puntos() {
               <Button
                 variant="outline"
                 onClick={() => handleAdjust("minus")}
-                disabled={createStatus === "loading"}
+                disabled={createStatus === "loading" || isCreatingLocal}
               >
                 Ajuste -
               </Button>
               <Button
                 variant="outline"
                 onClick={() => handleAdjust("plus")}
-                disabled={createStatus === "loading"}
+                disabled={createStatus === "loading" || isCreatingLocal}
               >
                 Ajuste +
               </Button>

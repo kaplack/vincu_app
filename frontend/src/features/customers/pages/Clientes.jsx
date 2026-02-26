@@ -32,6 +32,9 @@ import {
   selectSelectedCustomer,
   selectSelectedCustomerStatus,
   selectTransactionsByMembershipId,
+  createCustomerThunk,
+  selectCreateCustomerStatus,
+  selectCreateCustomerError,
 } from "@/features/customers/slice/customerSlice";
 
 import QRCode from "qrcode";
@@ -50,6 +53,13 @@ export default function Clientes() {
   const [selectedMembershipId, setSelectedMembershipId] = useState(null);
   const [qrDataUrl, setQrDataUrl] = useState("");
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newPhone, setNewPhone] = useState("");
+  const [newFirstName, setNewFirstName] = useState("");
+
+  // modal de creacion dehabilitacion del boton crear cliente
+  const [isCreatingLocal, setIsCreatingLocal] = useState(false);
+
   const items = useSelector(selectCustomers);
   const status = useSelector(selectCustomersStatus);
 
@@ -59,6 +69,15 @@ export default function Clientes() {
   const tx = useSelector(
     selectTransactionsByMembershipId(selectedMembershipId),
   );
+
+  const createStatus = useSelector(selectCreateCustomerStatus);
+  const createError = useSelector(selectCreateCustomerError);
+
+  function cleanPhone9(value) {
+    return String(value ?? "")
+      .replace(/\D/g, "")
+      .slice(0, 9);
+  }
 
   useEffect(() => {
     dispatch(fetchCustomersThunk());
@@ -158,6 +177,9 @@ export default function Clientes() {
             >
               <QrCode className="h-4 w-4" />
               Escanear QR
+            </Button>
+            <Button className="gap-2" onClick={() => setCreateOpen(true)}>
+              + Nuevo cliente
             </Button>
           </div>
         </CardContent>
@@ -381,6 +403,103 @@ export default function Clientes() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Customer Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar cliente</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-slate-600">
+                Teléfono (9 dígitos)
+              </label>
+              <Input
+                placeholder="987654321"
+                value={newPhone}
+                onChange={(e) => setNewPhone(cleanPhone9(e.target.value))}
+                inputMode="numeric"
+                maxLength={9}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-600">
+                Nombre/alias (opcional)
+              </label>
+              <Input
+                placeholder="Ej. Don José"
+                value={newFirstName}
+                onChange={(e) => setNewFirstName(e.target.value)}
+                maxLength={80}
+              />
+            </div>
+
+            {createStatus === "failed" && (
+              <div className="text-sm text-red-600">
+                {createError?.message || "No se pudo crear el cliente."}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+                disabled={createStatus === "loading"}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                onClick={async () => {
+                  if (isCreatingLocal) return;
+                  if (newPhone.length !== 9) return;
+
+                  setIsCreatingLocal(true);
+                  try {
+                    const action = await dispatch(
+                      createCustomerThunk({
+                        phone: newPhone,
+                        firstName: newFirstName?.trim() || undefined,
+                      }),
+                    );
+
+                    if (createCustomerThunk.fulfilled.match(action)) {
+                      setCreateOpen(false);
+                      setNewPhone("");
+                      setNewFirstName("");
+                      await dispatch(fetchCustomersThunk());
+
+                      const membershipId =
+                        action.payload?.membership?.id ||
+                        action.payload?.membershipId;
+                      if (membershipId) openDetail(membershipId);
+                    }
+                  } finally {
+                    setIsCreatingLocal(false);
+                  }
+                }}
+                disabled={
+                  createStatus === "loading" ||
+                  isCreatingLocal ||
+                  newPhone.length !== 9
+                }
+              >
+                {createStatus === "loading" || isCreatingLocal
+                  ? "Creando..."
+                  : "Crear"}
+              </Button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Se creará el cliente con su teléfono y se generará un link público
+              para consultar puntos.
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
