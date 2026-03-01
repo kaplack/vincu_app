@@ -153,10 +153,110 @@ async function deleteReward({ businessId, rewardId }) {
   await reward.destroy();
 }
 
+async function addRewardImage({
+  businessId,
+  rewardId,
+  imageUrl,
+  setAsThumbnail,
+}) {
+  const reward = await models.Reward.findOne({
+    where: { id: rewardId, businessId },
+  });
+  if (!reward) {
+    throw new HttpError(404, "Reward not found.", "REWARD_NOT_FOUND");
+  }
+
+  const images = Array.isArray(reward.images) ? reward.images : [];
+
+  // idempotente: si ya existe, solo setea thumbnail si lo piden
+  if (images.includes(imageUrl)) {
+    if (setAsThumbnail) {
+      await reward.update({ thumbnailUrl: imageUrl });
+    }
+    return reward;
+  }
+
+  if (images.length >= 3) {
+    throw new HttpError(400, "Max 3 images per reward.", "MAX_IMAGES");
+  }
+
+  const updatedImages = [...images, imageUrl];
+
+  let thumbnailUrl = reward.thumbnailUrl;
+
+  // si no hay thumbnail, la primera imagen se vuelve thumbnail
+  if (!thumbnailUrl) thumbnailUrl = imageUrl;
+
+  // si el request dice que sea thumbnail, lo forzamos
+  if (setAsThumbnail) thumbnailUrl = imageUrl;
+
+  await reward.update({
+    images: updatedImages,
+    thumbnailUrl,
+  });
+
+  return reward;
+}
+
+async function removeRewardImage({ businessId, rewardId, imageUrl }) {
+  const reward = await models.Reward.findOne({
+    where: { id: rewardId, businessId },
+  });
+  if (!reward) {
+    throw new HttpError(404, "Reward not found.", "REWARD_NOT_FOUND");
+  }
+
+  const images = Array.isArray(reward.images) ? reward.images : [];
+  const updatedImages = images.filter((img) => img !== imageUrl);
+
+  let thumbnailUrl = reward.thumbnailUrl;
+
+  // si borran el thumbnail, reasignar al primero o null
+  if (thumbnailUrl === imageUrl) {
+    thumbnailUrl = updatedImages[0] ?? null;
+  }
+
+  // si ya no quedan imágenes, thumbnail null
+  if (updatedImages.length === 0) thumbnailUrl = null;
+
+  await reward.update({
+    images: updatedImages,
+    thumbnailUrl,
+  });
+
+  return reward;
+}
+
+async function setRewardThumbnail({ businessId, rewardId, thumbnailUrl }) {
+  const reward = await models.Reward.findOne({
+    where: { id: rewardId, businessId },
+  });
+  if (!reward) {
+    throw new HttpError(404, "Reward not found.", "REWARD_NOT_FOUND");
+  }
+
+  const images = Array.isArray(reward.images) ? reward.images : [];
+
+  if (!images.includes(thumbnailUrl)) {
+    throw new HttpError(
+      400,
+      "Thumbnail must be one of reward images.",
+      "THUMBNAIL_INVALID",
+    );
+  }
+
+  await reward.update({ thumbnailUrl });
+
+  return reward;
+}
+
 module.exports = {
   listRewards,
   createReward,
   updateReward,
   archiveReward,
   deleteReward,
+  addRewardImage,
+  removeRewardImage,
+  setRewardThumbnail,
 };

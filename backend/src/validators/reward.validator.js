@@ -55,8 +55,33 @@ const listRewardsSchema = z.object({
     .partial(),
 });
 
+const addRewardImageSchema = z.object({
+  params: uuidParam,
+  body: z.object({
+    imageUrl: z.string().url(),
+    setAsThumbnail: z.boolean().optional(),
+  }),
+});
+
+const removeRewardImageSchema = z.object({
+  params: uuidParam,
+  body: z.object({
+    imageUrl: z.string().url(),
+  }),
+});
+
+const setRewardThumbnailSchema = z.object({
+  params: uuidParam,
+  body: z.object({
+    thumbnailUrl: z.string().url(),
+  }),
+});
+
 module.exports = {
   createRewardSchema,
   updateRewardSchema,
   listRewardsSchema,
+  addRewardImageSchema,
+  removeRewardImageSchema,
+  setRewardThumbnailSchema,
 };

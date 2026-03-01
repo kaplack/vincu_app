@@ -12,6 +12,9 @@ const rewardController = require("../controllers/reward.controller");
 const {
   createRewardSchema,
   updateRewardSchema,
+  addRewardImageSchema,
+  removeRewardImageSchema,
+  setRewardThumbnailSchema,
 } = require("../validators/reward.validator");
 
 const router = express.Router();
@@ -56,6 +59,33 @@ router.delete(
   requireAuth,
   requireBusinessMember,
   rewardController.deleteReward,
+);
+
+// Add image (max 3). Optionally set as thumbnail.
+router.post(
+  "/:rewardId/images",
+  requireAuth,
+  requireBusinessMember,
+  validate(addRewardImageSchema),
+  rewardController.addRewardImage,
+);
+
+// Set thumbnail (must be one of images)
+router.post(
+  "/:rewardId/thumbnail",
+  requireAuth,
+  requireBusinessMember,
+  validate(setRewardThumbnailSchema),
+  rewardController.setRewardThumbnail,
+);
+
+// Remove image (if it was thumbnail, backend reassigns)
+router.delete(
+  "/:rewardId/images",
+  requireAuth,
+  requireBusinessMember,
+  validate(removeRewardImageSchema),
+  rewardController.removeRewardImage,
 );
 
 module.exports = router;

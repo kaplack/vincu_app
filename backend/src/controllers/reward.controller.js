@@ -92,10 +92,86 @@ async function deleteReward(req, res, next) {
   }
 }
 
+async function addRewardImage(req, res, next) {
+  try {
+    const businessId = req.principalBusinessId;
+    const rewardId = req.params.rewardId;
+    const { imageUrl, setAsThumbnail } = req.body;
+
+    const updated = await rewardService.addRewardImage({
+      businessId,
+      rewardId,
+      imageUrl,
+      setAsThumbnail,
+    });
+
+    res.json({
+      item: {
+        id: updated.id,
+        images: updated.images,
+        thumbnailUrl: updated.thumbnailUrl,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function removeRewardImage(req, res, next) {
+  try {
+    const businessId = req.principalBusinessId;
+    const rewardId = req.params.rewardId;
+    const { imageUrl } = req.body;
+
+    const updated = await rewardService.removeRewardImage({
+      businessId,
+      rewardId,
+      imageUrl,
+    });
+
+    res.json({
+      item: {
+        id: updated.id,
+        images: updated.images,
+        thumbnailUrl: updated.thumbnailUrl,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function setRewardThumbnail(req, res, next) {
+  try {
+    const businessId = req.principalBusinessId;
+    const rewardId = req.params.rewardId;
+    const { thumbnailUrl } = req.body;
+
+    const updated = await rewardService.setRewardThumbnail({
+      businessId,
+      rewardId,
+      thumbnailUrl,
+    });
+
+    res.json({
+      item: {
+        id: updated.id,
+        images: updated.images,
+        thumbnailUrl: updated.thumbnailUrl,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listRewards,
   createReward,
   updateReward,
   archiveReward,
   deleteReward,
+  addRewardImage,
+  removeRewardImage,
+  setRewardThumbnail,
 };

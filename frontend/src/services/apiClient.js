@@ -11,7 +11,7 @@ const apiClient = axios.create({
 // Request interceptor: agrega JWT
 apiClient.interceptors.request.use(
   (config) => {
-    console.log("Request made with config:", config);
+    //console.log("Request made with config:", config);
     const token = localStorage.getItem("vincu_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

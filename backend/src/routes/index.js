@@ -10,6 +10,7 @@ router.use("/wallet-card", require("./walletCard.routes"));
 router.use("/public", require("./publicLoyalty.routes"));
 router.use("/customers", require("./customer.routes"));
 router.use("/points", require("./points.routes"));
+router.use("/upload", require("./upload.routes"));
 router.use("/rewards", require("./reward.routes"));
 router.use("/redemptions", require("./redemption.routes"));
 router.use("/catalog", require("./catalog.routes"));

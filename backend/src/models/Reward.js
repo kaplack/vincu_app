@@ -32,6 +32,17 @@ function initRewardModel(sequelize) {
         allowNull: false,
       },
 
+      thumbnailUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+
+      images: {
+        type: DataTypes.JSONB, // Postgres (Neon)
+        allowNull: false,
+        defaultValue: [],
+      },
+
       isActive: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
