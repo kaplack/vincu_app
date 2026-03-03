@@ -41,3 +41,13 @@ export async function getWalletSaveUrlByPublicToken(token) {
   const { data } = await publicApiClient.get(`/wallet-card/c/${token}/save`);
   return data; // { saveUrl }
 }
+
+// ======================
+// Catalog (public)
+// ======================
+export async function fetchPublicRewards({ businessSlug, q }) {
+  const res = await publicApiClient.get(`/catalog/${businessSlug}/rewards`, {
+    params: q ? { q } : {},
+  });
+  return res.data; // { items: [...] }
+}

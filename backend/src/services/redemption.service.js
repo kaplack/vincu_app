@@ -1,5 +1,6 @@
 // src/services/redemption.service.js
 const { Op } = require("sequelize");
+const crypto = require("crypto");
 const { HttpError } = require("../utils/httpError");
 const models = require("../models");
 const { sequelize } = require("../config/db");
@@ -11,6 +12,21 @@ console.log("[redemption.service] loaded from:", __filename);
 function isExpired(expiresAt) {
   if (!expiresAt) return false;
   return Date.now() > new Date(expiresAt).getTime();
+}
+
+/**
+ * Generate a human-friendly redeem code (base32-ish uppercase)
+ * Example: 4FJ9K2Q8M7L3A9D2 (16 chars)
+ */
+function generateRedeemCode(length = 16) {
+  // 0/1/I/O avoided for readability
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const bytes = crypto.randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i += 1) {
+    out += alphabet[bytes[i] % alphabet.length];
+  }
+  return out;
 }
 
 async function listRedemptions({ businessId, status, q, includeCancelled }) {
@@ -252,8 +268,136 @@ function humanReason(reasonCode, reasonText) {
   return map[reasonCode] || "Otro";
 }
 
+async function directRedeem({
+  businessId,
+  membershipId,
+  rewardId,
+  operatorUserId,
+  branchId,
+  source = "manual", // manual | qr
+}) {
+  if (!membershipId) {
+    throw new HttpError(
+      400,
+      "membershipId is required.",
+      "MEMBERSHIP_REQUIRED",
+    );
+  }
+  if (!rewardId) {
+    throw new HttpError(400, "rewardId is required.", "REWARD_REQUIRED");
+  }
+  if (!branchId) {
+    throw new HttpError(400, "branchId is required.", "BRANCH_REQUIRED");
+  }
+
+  return await sequelize.transaction(async (t) => {
+    // 1) Membership (lock) + saldo
+    const membership = await models.CustomerMembership.findOne({
+      where: { id: membershipId, businessId },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!membership) {
+      throw new HttpError(404, "Not found.", "NOT_FOUND");
+    }
+
+    // 2) Reward válida (del negocio, activa)
+    const reward = await models.Reward.findOne({
+      where: {
+        id: rewardId,
+        businessId,
+        isActive: true,
+        isArchived: false,
+      },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!reward) {
+      throw new HttpError(404, "Reward not found.", "REWARD_NOT_FOUND");
+    }
+
+    const cost = Math.abs(reward.pointsRequired || 0);
+
+    if (!Number.isInteger(cost) || cost <= 0) {
+      throw new HttpError(
+        400,
+        "Invalid reward pointsRequired.",
+        "INVALID_REWARD",
+      );
+    }
+
+    if ((membership.pointsBalance ?? 0) < cost) {
+      throw new HttpError(409, "Insufficient points.", "INSUFFICIENT_POINTS");
+    }
+
+    // 3) Crear redeemCode único
+    let redeemCode = generateRedeemCode(16);
+    for (let i = 0; i < 5; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const exists = await models.RewardRedemption.findOne({
+        where: { redeemCode },
+        transaction: t,
+      });
+      if (!exists) break;
+      redeemCode = generateRedeemCode(16);
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // 4) Crear redemption (y marcarlo como redeemed inmediatamente)
+    const redemption = await models.RewardRedemption.create(
+      {
+        businessId,
+        rewardId,
+        customerMembershipId: membershipId,
+        redeemCode,
+        status: "redeemed", // POS: confirmado al instante
+        issuedAt: now,
+        expiresAt,
+        pointsCostSnapshot: cost,
+        rewardNameSnapshot: reward.name,
+
+        redeemedAt: now,
+        redeemedByUserId: operatorUserId ?? null,
+        branchId,
+      },
+      { transaction: t },
+    );
+
+    // 5) Descontar puntos (source manual/qr requiere operator + branch)
+    const idempotencyKey = `direct-${redemption.id}`;
+
+    const tx = await pointsService.createTransaction(
+      businessId,
+      operatorUserId ?? null,
+      {
+        membershipId,
+        type: "redeem",
+        points: -cost,
+        note: `Canje directo: ${reward.name}`,
+        source,
+        branchId,
+        idempotencyKey,
+        relatedRedemptionId: redemption.id,
+      },
+      { transaction: t },
+    );
+
+    return {
+      ok: true,
+      message: "Canje confirmado.",
+      item: redemption,
+      pointsBalance: tx.pointsBalance,
+    };
+  });
+}
+
 module.exports = {
   listRedemptions,
   consumeRedemption,
   cancelRedemption,
+  directRedeem,
 };

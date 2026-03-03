@@ -16,3 +16,9 @@ export async function cancelRedemption(payload) {
   const { data } = await apiClient.post(`${BASE}/cancel`, payload);
   return data; // { ok, message, item }
 }
+
+export async function directRedeem(payload) {
+  // payload: { membershipId, rewardId, branchId, source?: "manual"|"qr" }
+  const { data } = await apiClient.post(`${BASE}/direct`, payload);
+  return data; // { ok, message, item, pointsBalance }
+}

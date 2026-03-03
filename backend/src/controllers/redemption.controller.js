@@ -66,8 +66,32 @@ async function cancelRedemption(req, res, next) {
   }
 }
 
+async function directRedeem(req, res, next) {
+  try {
+    const businessId = req.principalBusinessId;
+    const operatorUserId = req.user?.id;
+    const branchId = req.selectedBranchId;
+
+    const { membershipId, rewardId, source } = req.body;
+
+    const result = await redemptionService.directRedeem({
+      businessId,
+      membershipId,
+      rewardId,
+      operatorUserId,
+      branchId,
+      source, // "manual" | "qr"
+    });
+
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listRedemptions,
   consumeRedemption,
   cancelRedemption,
+  directRedeem,
 };

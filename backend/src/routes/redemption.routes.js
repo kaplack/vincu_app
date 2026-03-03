@@ -16,6 +16,7 @@ const {
   consumeRedemptionSchema,
   cancelRedemptionSchema,
   listRedemptionsSchema,
+  directRedeemSchema,
 } = require("../validators/redemption.validator");
 
 const router = express.Router();
@@ -65,6 +66,16 @@ router.post(
   requireBranchId,
   validate(consumeRedemptionSchema),
   redemptionController.consumeRedemption,
+);
+
+// Direct redeem (POS): membershipId + rewardId => create & redeem immediately
+router.post(
+  "/direct",
+  requireAuth,
+  requireBusinessMember,
+  requireBranchId,
+  validate(directRedeemSchema),
+  redemptionController.directRedeem,
 );
 
 // Cancel redemption by redeemCode (requires reason)

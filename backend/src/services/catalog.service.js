@@ -25,7 +25,7 @@ function generateRedeemCode(length = 16) {
 async function listActiveRewards({ businessSlug, q }) {
   const business = await models.Business.findOne({
     where: { slug: businessSlug },
-    attributes: ["id", "slug", "name"],
+    attributes: ["id", "slug", "commercialName"],
   });
 
   if (!business) {
@@ -74,7 +74,7 @@ async function createRedemption({
 
   const business = await models.Business.findOne({
     where: { slug: businessSlug },
-    attributes: ["id", "slug", "name"],
+    attributes: ["id", "slug", "commercialName"],
   });
 
   if (!business) {

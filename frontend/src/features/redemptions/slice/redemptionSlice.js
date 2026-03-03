@@ -1,8 +1,10 @@
+// frontend/src/features/redemptions/slice/redemptionSlice.js
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   listRedemptions,
   consumeRedemption,
   cancelRedemption,
+  directRedeem,
 } from "../api/redemptionApi";
 import { selectSelectedBranchId } from "@/features/settings/slice/businessSlice";
 
@@ -72,6 +74,30 @@ export const cancelRedemptionThunk = createAsyncThunk(
   },
 );
 
+export const directRedeemThunk = createAsyncThunk(
+  "redemptions/directRedeem",
+  async (
+    { membershipId, rewardId, source = "manual" },
+    { getState, rejectWithValue },
+  ) => {
+    try {
+      const branchId = selectSelectedBranchId(getState());
+      if (!branchId) {
+        return rejectWithValue({
+          message: "Selecciona una sucursal antes de canjear.",
+          code: "BRANCH_REQUIRED_UI",
+        });
+      }
+
+      return await directRedeem({ membershipId, rewardId, branchId, source });
+    } catch (err) {
+      return rejectWithValue(
+        err?.response?.data || { message: "Failed to direct redeem." },
+      );
+    }
+  },
+);
+
 const initialState = {
   issued: [],
   redeemed: [],
@@ -126,6 +152,13 @@ const redemptionSlice = createSlice({
         const item = action.payload?.item;
         if (!item?.id) return;
         state.issued = state.issued.filter((x) => x.id !== item.id);
+      })
+
+      // direct redeem => agrega a redeemed
+      .addCase(directRedeemThunk.fulfilled, (state, action) => {
+        const item = action.payload?.item;
+        if (!item?.id) return;
+        state.redeemed = upsertById(state.redeemed, item);
       });
   },
 });

@@ -16,6 +16,7 @@ import Blog from "@/features/marketing/pages/Blog";
 // import ConsultaLogin from "@/features/public/pages/ConsultaLogin";
 // import ConsultaCards from "@/features/public/pages/ConsultaCard";
 import CardPublic from "@/features/public/pages/CardPublic";
+import CatalogPublic from "@/features/public/pages/CatalogPublic";
 
 import JoinPublic from "@/features/public/pages/JoinPublic";
 
@@ -34,7 +35,9 @@ import Dashboard from "@/features/loyalty/pages/Dashboard";
 import Clientes from "@/features/customers/pages/Clientes";
 import Puntos from "@/features/points/pages/Puntos";
 import Recompensas from "@/features/rewards/pages/Recompensas";
-import Canjes from "@/features/redemptions/pages/Canjes";
+import Canjes from "@/features/redemptions/pages/Canjes"; // este será el PADRE layout
+import CanjesDirecto from "@/features/redemptions/pages/CanjesDirecto";
+import CanjesValidar from "@/features/redemptions/pages/CanjesValidar";
 import Tarjeta from "@/features/settings/pages/Tarjeta";
 import Reportes from "@/features/loyalty/pages/Reportes";
 import Plan from "@/features/settings/pages/Plan";
@@ -57,6 +60,7 @@ export const routes = (
       {/* <Route path="/consulta" element={<ConsultaLogin />} />
       <Route path="/consulta/cards" element={<ConsultaCards />} /> */}
       <Route path="/c/:token" element={<CardPublic />} />
+      <Route path="/catalog/:businessSlug" element={<CatalogPublic />} />
     </Route>
 
     {/* 👤 Customer portal (privado con customerToken, layout propio) */}
@@ -75,7 +79,10 @@ export const routes = (
         <Route path="clientes" element={<Clientes />} />
         <Route path="puntos" element={<Puntos />} />
         <Route path="recompensas" element={<Recompensas />} />
-        <Route path="canjes" element={<Canjes />} />
+        <Route path="canjes" element={<Canjes />}>
+          <Route index element={<CanjesDirecto />} />
+          <Route path="validar" element={<CanjesValidar />} />
+        </Route>
 
         {/* ✅ Setup inicial: solo requiere sesión */}
         <Route path="configuracion/negocio" element={<Negocio />} />

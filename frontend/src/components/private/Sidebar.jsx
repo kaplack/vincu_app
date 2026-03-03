@@ -69,6 +69,10 @@ const navItems = [
     label: "Canjes",
     icon: CheckCircle,
     roles: ["OWNER", "OPERATOR"],
+    children: [
+      { id: "canjes", label: "Canje Directo", icon: CheckCircle },
+      { id: "canjes/validar", label: "Validar Código", icon: CheckCircle },
+    ],
   },
   // {
   //   id: "reportes",
@@ -142,6 +146,14 @@ export function Sidebar({
       setConfigOpen(true);
     }
   }, [isConfigView]);
+
+  const isCanjesView =
+    typeof currentView === "string" && currentView.startsWith("canjes");
+  const [canjesOpen, setCanjesOpen] = useState(isCanjesView);
+
+  useEffect(() => {
+    if (isCanjesView) setCanjesOpen(true);
+  }, [isCanjesView]);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -435,14 +447,17 @@ export function Sidebar({
               );
             }
 
-            // ✅ Caso 2: item padre (Configuración) con hijos
+            // ✅ Caso 2: item padre (cualquiera) con hijos
             const isParentActive =
               currentView === item.id ||
               (typeof currentView === "string" &&
-                currentView.startsWith("configuracion/"));
+                currentView.startsWith(`${item.id}/`));
 
-            // 👉 Default: cuando hacen click en el padre, ir a Negocio
-            const defaultChildId = "configuracion/negocio";
+            // 👉 Default: al click en el padre, ir al primer child (o a uno específico si quieres)
+            const defaultChildId =
+              item.id === "configuracion"
+                ? "configuracion/negocio"
+                : item.children?.[0]?.id;
 
             // --- Collapsed: Flyout (Dropdown a la derecha)
             if (collapsed) {
@@ -491,12 +506,18 @@ export function Sidebar({
             }
 
             // --- Expanded: Collapsible
+            const isConfig = item.id === "configuracion";
+            const isCanjes = item.id === "canjes";
+
+            const open = isConfig ? configOpen : isCanjes ? canjesOpen : false;
+            const setOpen = isConfig
+              ? setConfigOpen
+              : isCanjes
+                ? setCanjesOpen
+                : () => {};
+
             return (
-              <Collapsible
-                key={item.id}
-                open={configOpen}
-                onOpenChange={setConfigOpen}
-              >
+              <Collapsible key={item.id} open={open} onOpenChange={setOpen}>
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
@@ -504,7 +525,7 @@ export function Sidebar({
                       // default a Negocio
                       goTo(defaultChildId);
                       // y abrir el collapsible
-                      setConfigOpen(true);
+                      setOpen(true);
                     }}
                     className={cn(
                       "w-full justify-start gap-3 text-white hover:bg-slate-800",
@@ -516,7 +537,7 @@ export function Sidebar({
                     <ChevronDown
                       className={cn(
                         "h-4 w-4 transition-transform",
-                        (configOpen || isParentActive) && "rotate-180",
+                        (open || isParentActive) && "rotate-180",
                       )}
                     />
                   </Button>

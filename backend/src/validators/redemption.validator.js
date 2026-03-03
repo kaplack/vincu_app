@@ -69,8 +69,26 @@ const cancelRedemptionSchema = z
     }
   });
 
+/**
+ * POST /api/redemptions/direct
+ * Body:
+ * - membershipId: uuid
+ * - rewardId: uuid
+ * - branchId: uuid (required)
+ * - source: manual|qr (optional)
+ */
+const directRedeemSchema = z.object({
+  body: z.object({
+    membershipId: z.string().uuid(),
+    rewardId: z.string().uuid(),
+    branchId: z.string().uuid(),
+    source: z.enum(["manual", "qr"]).optional().default("manual"),
+  }),
+});
+
 module.exports = {
   listRedemptionsSchema,
   consumeRedemptionSchema,
   cancelRedemptionSchema,
+  directRedeemSchema,
 };
