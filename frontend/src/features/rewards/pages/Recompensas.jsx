@@ -1,3 +1,5 @@
+// frontend/src/features/rewards/pages/Recompensas.jsx
+
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -38,10 +40,14 @@ import {
   setRewardThumbnail,
 } from "@/features/rewards/api/rewardApi";
 
+import { useOutletContext } from "react-router-dom";
+import CatalogoQR from "@/features/settings/components/CatalogoQR";
+
 export default function Recompensas() {
   const dispatch = useDispatch();
   const rewards = useSelector(selectRewards);
   const status = useSelector(selectRewardsStatus);
+  const { currentBusiness } = useOutletContext();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
@@ -230,6 +236,12 @@ export default function Recompensas() {
 
       {status === "loading" && (
         <div className="text-slate-500">Cargando recompensas...</div>
+      )}
+
+      {currentBusiness?.slug && (
+        <div className="w-full">
+          <CatalogoQR business={currentBusiness} />
+        </div>
       )}
 
       {/* Rewards Grid */}
