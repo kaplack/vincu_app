@@ -3,7 +3,15 @@ const rewardService = require("../services/reward.service");
 
 async function listRewards(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
 
     const includeInactive = req.query?.includeInactive ?? false;
     const includeArchived = req.query?.includeArchived ?? false;
@@ -24,7 +32,15 @@ async function listRewards(req, res, next) {
 
 async function createReward(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
     const createdByUserId = req.user?.id;
 
     const created = await rewardService.createReward({
@@ -41,7 +57,15 @@ async function createReward(req, res, next) {
 
 async function updateReward(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
     const rewardId = req.params.rewardId;
     const updatedByUserId = req.user?.id;
 
@@ -60,7 +84,15 @@ async function updateReward(req, res, next) {
 
 async function archiveReward(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
     const rewardId = req.params.rewardId;
     const archivedByUserId = req.user?.id;
 
@@ -78,7 +110,15 @@ async function archiveReward(req, res, next) {
 
 async function deleteReward(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
     const rewardId = req.params.rewardId;
 
     await rewardService.deleteReward({
@@ -94,7 +134,15 @@ async function deleteReward(req, res, next) {
 
 async function addRewardImage(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
     const rewardId = req.params.rewardId;
     const { imageUrl, setAsThumbnail } = req.body;
 
@@ -119,7 +167,15 @@ async function addRewardImage(req, res, next) {
 
 async function removeRewardImage(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
     const rewardId = req.params.rewardId;
     const { imageUrl } = req.body;
 
@@ -143,7 +199,15 @@ async function removeRewardImage(req, res, next) {
 
 async function setRewardThumbnail(req, res, next) {
   try {
-    const businessId = req.principalBusinessId;
+    const businessId = req.principalBusinessId || req.user?.currentBusinessId;
+
+    if (!businessId) {
+      throw new HttpError(
+        409,
+        "No business selected.",
+        "BUSINESS_NOT_SELECTED",
+      );
+    }
     const rewardId = req.params.rewardId;
     const { thumbnailUrl } = req.body;
 
