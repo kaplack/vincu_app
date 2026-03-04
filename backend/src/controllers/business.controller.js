@@ -1,4 +1,5 @@
 // backend/src/controllers/business.controller.js
+const { get } = require("../routes/business.routes");
 const businessService = require("../services/business.service");
 const invitationService = require("../services/invitation.service");
 
@@ -109,6 +110,18 @@ async function removeUser(req, res, next) {
   }
 }
 
+// backend/src/controllers/business.controller.js
+
+async function getPublicBusinessBySlug(req, res, next) {
+  try {
+    const { slug } = req.params;
+    const business = await businessService.getPublicBusinessBySlug(slug);
+    res.status(200).json({ business });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   createBusiness,
   listBusinesses,
@@ -118,4 +131,5 @@ module.exports = {
   invite,
   updateUser,
   removeUser,
+  getPublicBusinessBySlug,
 };

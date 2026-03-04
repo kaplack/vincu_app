@@ -81,10 +81,23 @@ const updateMemberSchema = z
     message: "At least one field (role or status) is required.",
   });
 
+// ✅ Obtener negocio público por slug
+const slugSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(2)
+    .max(120)
+    .regex(/^[a-z0-9-]+$/, {
+      message: "Slug must contain only lowercase letters, numbers and hyphens.",
+    }),
+});
+
 module.exports = {
   createBusinessSchema,
   createBranchSchema,
   updateBusinessSchema,
   inviteUserSchema,
   updateMemberSchema,
+  slugSchema,
 };

@@ -3,7 +3,11 @@ const router = require("express").Router();
 
 const businessController = require("../controllers/business.controller");
 const { requireAuth } = require("../middlewares/auth.middleware");
-const { validateBody } = require("../middlewares/validate.middleware");
+const {
+  validateBody,
+  validateParams,
+} = require("../middlewares/validate.middleware");
+const { slugSchema } = require("../validators/business.validators");
 const {
   requireBusinessMember,
   requireBusinessOwner,
@@ -73,6 +77,13 @@ router.delete(
   "/:businessId/users/:userId",
   requireAuth,
   businessController.removeUser,
+);
+
+// get business public info by slug
+router.get(
+  "/public/by-slug/:slug",
+  validateParams(slugSchema),
+  businessController.getPublicBusinessBySlug,
 );
 
 module.exports = router;

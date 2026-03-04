@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import apiClient from "@/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,14 +15,52 @@ export default function JoinPublic() {
   const navigate = useNavigate();
   const { slug } = useParams();
 
+  // ✅ NEW: business info
+  const [bizStatus, setBizStatus] = useState("loading"); // loading | succeeded | failed
+  const [businessName, setBusinessName] = useState("");
+
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
 
+  // ✅ NEW: fetch business by slug
+  useEffect(() => {
+    let alive = true;
+
+    async function loadBusiness() {
+      console.log("Loading business with slug:", slug);
+      try {
+        setBizStatus("loading");
+        setBusinessName("");
+
+        const { data } = await apiClient.get(
+          `/businesses/public/by-slug/${slug}`,
+        );
+        const name = data?.business?.commercialName || "";
+
+        if (!alive) return;
+
+        setBusinessName(name);
+        setBizStatus("succeeded");
+      } catch (err) {
+        if (!alive) return;
+        setBizStatus("failed");
+      }
+    }
+
+    if (slug) loadBusiness();
+    else setBizStatus("failed");
+
+    return () => {
+      alive = false;
+    };
+  }, [slug]);
+
   const canSubmit = useMemo(
-    () => phone.length === 9 && status !== "loading",
-    [phone, status],
+    () =>
+      phone.length === 9 && status !== "loading" && bizStatus === "succeeded",
+    [phone, status, bizStatus],
   );
 
   async function onSubmit(e) {
@@ -53,8 +91,36 @@ export default function JoinPublic() {
     }
   }
 
+  const headerTitle =
+    bizStatus === "succeeded" && businessName ? (
+      <>
+        Bienvenido al programa de puntos de <br />
+        {businessName}
+      </>
+    ) : (
+      "Bienvenidos al programa de puntos"
+    );
+
   return (
     <div className="mx-auto max-w-md space-y-4 p-4 md:p-8">
+      {/* ✅ NEW header */}
+      <div className="space-y-1 text-center">
+        <h1 className="text-xl font-semibold tracking-tight">{headerTitle}</h1>
+        <p className="text-sm text-slate-600">
+          Solo llena estos datos y empezarás a sumar puntos.
+        </p>
+
+        {bizStatus === "loading" && (
+          <p className="text-xs text-slate-500">Cargando negocio...</p>
+        )}
+
+        {bizStatus === "failed" && (
+          <p className="text-xs text-red-600">
+            No encontramos este negocio. Revisa el enlace.
+          </p>
+        )}
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Ingresa tu teléfono</CardTitle>
@@ -71,6 +137,7 @@ export default function JoinPublic() {
                 placeholder="987654321"
                 inputMode="numeric"
                 maxLength={9}
+                disabled={bizStatus !== "succeeded"}
               />
             </div>
 
@@ -83,6 +150,7 @@ export default function JoinPublic() {
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Ej. José"
                 maxLength={80}
+                disabled={bizStatus !== "succeeded"}
               />
             </div>
 

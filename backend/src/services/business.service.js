@@ -505,6 +505,31 @@ async function removeMember(businessId, targetUserId, user) {
   return { ok: true };
 }
 
+async function getPublicBusinessBySlug(slug) {
+  const Business = sequelize.models.Business;
+
+  const clean = String(slug || "")
+    .trim()
+    .toLowerCase();
+  if (!clean) {
+    throw new HttpError(400, "slug is required.", "BIZ_SLUG_REQUIRED");
+  }
+
+  const business = await Business.findOne({
+    where: { slug: clean, parentId: null, isActive: true },
+    attributes: ["commercialName", "slug"], // + logoUrl/brand fields si existen luego
+  });
+
+  if (!business) {
+    throw new HttpError(404, "Business not found.", "BIZ_NOT_FOUND");
+  }
+
+  return {
+    commercialName: business.commercialName,
+    slug: business.slug,
+  };
+}
+
 module.exports = {
   createBusiness,
   listBusinessesForUser,
@@ -513,4 +538,5 @@ module.exports = {
   listBusinessUsers,
   updateMember,
   removeMember,
+  getPublicBusinessBySlug,
 };
