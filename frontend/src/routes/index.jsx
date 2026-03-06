@@ -6,6 +6,7 @@ import RoleGuard from "./RoleGuard";
 
 //PUBLIC LAYOUT
 import PublicLayout from "@/components/common/PublicLayout";
+import CustomerPublicLayout from "@/app/layouts/customer/CustomerPublicLayout";
 
 import Landing from "@/features/marketing/pages/Landing";
 import Login from "@/features/auth/pages/Login";
@@ -49,16 +50,18 @@ import Invite from "../features/auth/pages/Invite";
 
 export const routes = (
   <>
-    {/* 🌐 Public web */}
+    {/* 🌐 Public web / marketing */}
     <Route element={<PublicLayout />}>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/invite" element={<Invite />} />
+    </Route>
+
+    {/* 👤 Customer public flow */}
+    <Route element={<CustomerPublicLayout />}>
       <Route path="/join/:slug" element={<JoinPublic />} />
-      {/* <Route path="/consulta" element={<ConsultaLogin />} />
-      <Route path="/consulta/cards" element={<ConsultaCards />} /> */}
       <Route path="/c/:token" element={<CardPublic />} />
       <Route path="/catalog/:businessSlug" element={<CatalogPublic />} />
     </Route>

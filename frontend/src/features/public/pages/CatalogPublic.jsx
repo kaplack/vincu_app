@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 import { fetchPublicRewards } from "../api/publicLoyaltyApi";
+import PublicRewardCard from "../components/PublicRewardCard";
 
 function useDebouncedValue(value, delay = 400) {
   const [debounced, setDebounced] = useState(value);
@@ -89,42 +90,10 @@ export default function CatalogPublic() {
         <div className="text-sm text-red-600">{error}</div>
       )}
 
-      <div className="flex flex-wrap gap-6 justify-center">
-        {items.map((r) => {
-          const img = r.thumbnailUrl || r.images?.[0] || "";
-          return (
-            <Card
-              key={r.id}
-              className="basis-[300px] shrink-0 grow-0 overflow-hidden flex flex-col hover:shadow-lg transition-shadow"
-            >
-              {img ? (
-                <div className="w-100% h-[350px] bg-muted overflow-hidden">
-                  <img
-                    src={img}
-                    alt={r.name}
-                    loading="lazy"
-                    className="w-full h-full object-cover block"
-                  />
-                </div>
-              ) : null}
-
-              <CardHeader className="px-0 pt-3 pb-2 flex flex-col gap-1">
-                <div className="px-3">
-                  <CardTitle className="text-base">{r.name}</CardTitle>
-                  <div className="flex gap-2 items-center mt-1">
-                    <Badge>{r.pointsRequired} pts</Badge>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="px-0 pb-4 text-sm text-muted-foreground">
-                <p className="px-3 whitespace-normal break-words">
-                  {r.description || " "}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((r) => (
+          <PublicRewardCard key={r.id} reward={r} />
+        ))}
       </div>
 
       {status === "succeeded" && items.length === 0 && (
